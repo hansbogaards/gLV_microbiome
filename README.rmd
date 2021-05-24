@@ -3,9 +3,19 @@ title: R code "Correlations cannot distinguish interaction types in microbial ne
 author: "Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards"
 date: "22/05/2021"
 output: 
-  html_document:
-    keep_md: true
+  github_document:
+    toc: true
+    toc_depth: 3
+editor_options:
+  chunk_output_type: console
 ---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE, comment = NA, cache = TRUE,
+  fig.width = 7, fig.height = 7)
+```
+
 
 # Contents
 ### 1- Introduction
