@@ -1,77 +1,64 @@
----
-title: R code "Correlations cannot distinguish interaction types in microbial networks"
-author: "Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards"
-date: "22/05/2021"
-output: 
-  github_document:
-    toc: true
-    toc_depth: 3
-editor_options:
-  chunk_output_type: console
----
+R code “Correlations cannot distinguish interaction types in microbial
+networks”
+================
+Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and
+Johannes A. Bogaards
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  echo = TRUE, message = FALSE, warning = FALSE, comment = NA, cache = TRUE,
-  fig.width = 7, fig.height = 7)
-```
+-   [Introduction](#introduction)
+-   [Install and load the packages](#install-and-load-the-packages)
+-   [The generalized Lotka-Volterra
+    model](#the-generalized-lotka-volterra-model)
+-   [Choose your settings and draw random
+    parameters](#choose-your-settings-and-draw-random-parameters)
+-   [Solve the model](#solve-the-model)
+-   [The data](#the-data)
+-   [Calculate the partial
+    correlations](#calculate-the-partial-correlations)
+-   [Calculate precision, recall and the
+    F1-score](#calculate-precision-recall-and-the-f1-score)
 
+## Introduction
 
-# Contents
-### 1- Introduction
-### 2- Install and load the packages
-### 3- The generalized Lotka-Volterra model
-### 4- Choose your settings and draw random parameters
-### 5- Solve the model
-### 6- The data
-### 7- Calculate the partial correlations
-### 8- Calculate the precision, recall and F1 score
+R code belonging to the paper: “Correlations cannot distinguish
+interaction types in microbial networks” by Susanne Pinto, Elisa
+Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards.
+This document shows the script used to perform the base case study of
+the paper.
 
+We assessed how correlations between bacterial groups are shaped by
+their ecological interactions, and how correlations can be employed to
+signify these interactions. We specifically investigate how inference of
+microbial interactions is affected by interindividual variation in
+process parameters, and mainly focus on the necessary model assumptions
+and the meaning of the obtained correlation-based networks rather than
+underlying network properties. We use the generalized Lotka-Volterra
+(gLV) model to demonstrate the performance of correlation-based network
+reconstruction.
 
+## Install and load the packages
 
-## 1- Introduction
-R code belonging to the paper: “Correlations cannot distinguish interaction types in microbial networks” by Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards. This document shows the script used to perform the base case study of the paper.
-
-We assessed how correlations between bacterial groups are shaped by their ecological interactions, and how correlations can be employed to signify these interactions. We specifically investigate how inference of microbial interactions is affected by interindividual variation in process parameters, and mainly focus on the necessary model assumptions and the meaning of the obtained correlation-based networks rather than underlying network properties. We use the generalized Lotka-Volterra (gLV) model to demonstrate the performance of correlation-based network reconstruction.
-
-
-## 2- Install and load the packages
 Install and load the packages in R.
 
-```{r install and load the packages, echo = TRUE, results = FALSE}
-if ( !"tidyverse" %in% .packages( all = TRUE ) ) install.packages( "tidyverse" )
+``` r
 library( tidyverse )
-
-if ( !"deSolve" %in% .packages( all = TRUE ) ) install.packages( "deSolve" )
 library( deSolve )
-
-if ( !"seqtime" %in% .packages( all = TRUE ) ) install.packages( "seqtime" )
 library( seqtime ) 
-
-if ( !"purrr" %in% .packages( all = TRUE ) ) install.packages( "purrr" )
 library( purrr )
-
-if ( !"ggplot2" %in% .packages( all = TRUE ) ) install.packages( "ggplot2" )
 library( ggplot2 )
-
-if ( !"reshape2" %in% .packages( all = TRUE ) ) install.packages( "reshape2" )
 library( reshape2 )
-
-if ( !"truncnorm" %in% .packages( all = TRUE ) ) install.packages( "truncnorm" )
 library( truncnorm )
-
-if ( !"Matrix" %in% .packages( all = TRUE ) ) install.packages( "Matrix" )
 library( Matrix )
-
 ```
 
+## The generalized Lotka-Volterra model
 
+We simulated bacterial communities by means of the generalized
+Lotka-Volterra (gLV) model. We simulated the population growth of
+species i with intrinsic growth rates (r), carrying capacities (K) and
+interactions with other species (a) that are specific for species i as
+well as for host m (see methods).
 
-## 3- The generalized Lotka-Volterra model
-We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species i with intrinsic growth rates (r), carrying capacities (K) and interactions with other species (a) that are specific for species i as well as for host m (see methods).
-
-
-```{r the model, echo = TRUE}
+``` r
 gLV.model <- function( time, y, parms ) { 
   # change the parms to the .noise version if desirable  
   r_im = parms$r_im %>% as.numeric()
@@ -86,19 +73,18 @@ gLV.model <- function( time, y, parms ) {
 } 
 ```
 
+## Choose your settings and draw random parameters
 
+First set some standard settings. Optionally you can choose a higher
+number of species and samples.
 
-## 4- Choose your settings and draw random parameters
-First set some standard settings. Optionally you can choose a higher number of species and samples. 
-
-```{r settings, echo = TRUE}
+``` r
 # Set date / time of the simulation  
-# This is used in the filenames
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
-# In the paper, 1000 simulations were used, here we choose 100 simulations because it is more time efficient
-n.simulations = 100
+# In the paper, 1000 simulations were used, here we choose 10 simulations, because it is more time efficient
+n.simulations = 10
 
 # Size of the population / total number of species
 n.species = 10
@@ -110,24 +96,22 @@ n.samples.total = 400
 
 # Timescale
 tstart = 0
-tend = 100
+tend = 50
 tstep = 1
 times <- seq( from = tstart, to = tend, by = tstep ) 
 ```
 
-Set (and save) your seeds for reproducibility.
+Set your seeds for reproducibility.
 
-```{r set seeds, echo = TRUE}
+``` r
 # Sample integers to later set as seed
 seed <- 100000 %>% sample.int( ., n.simulations, replace = FALSE )
-
-# save the seed list
-seed %>% saveRDS( object = ., file = paste0( "seeds_", Date, ".Rds" ) )
 ```
 
-With the following script the growth rates, carrying capacities and the interaction matrix are computed randomly from a given distribution.
+With the following script the growth rates, carrying capacities and the
+interaction matrix are computed randomly from a given distribution.
 
-```{r random parameters, echo = TRUE}
+``` r
 # make a list of n.simulations
 parms <- n.simulations %>% vector( mode = "list", length = . )
 
@@ -138,7 +122,7 @@ for ( j in 1:length( parms ) ) {
   
   for ( k in 1:n.samples.total ) {
     
-    # use the saved seeds
+    # use the seeds
     seed[j] %>% set.seed()
     
     # Set random parameters
@@ -200,15 +184,19 @@ for ( j in 1:length( parms ) ) {
 
 Visualization one of the interaction matrices
 
-```{r visualize matrix, echo = TRUE}
+``` r
 # visualise one interaction matrix
 a.matrix_sparse <- parms[[1]][[1]]$a.matrix %>% Matrix(., sparse=TRUE)
 a.matrix_sparse %>% image()
 ```
 
-We added multiplicative noise to the parameters to make them host specific. Here only the interspecies interactions are host specific, but it is possible to make the r_i and K_i also host-specific.
+![](README_files/figure-gfm/visualize%20matrix-1.png)<!-- -->
 
-```{r multiplicative noise, echo = TRUE}
+We added multiplicative noise to the parameters to make them host
+specific. Here only the interspecies interactions are host specific, but
+it is possible to make the r\_i and K\_i also host-specific.
+
+``` r
 for ( l in 1:length( parms ) ) {
   for ( m in 1:n.samples.total ) {
     # Add noise to the interaction matrix
@@ -225,23 +213,23 @@ for ( l in 1:length( parms ) ) {
     parms[[l]][[m]]$K_im <- parms[[l]][[m]]$K_i * exp( noise.on.K_i )
   }
 }
-
-# Save the parms list
-parms %>% saveRDS( object = ., file = paste0( "parms_original_data_", Date, ".Rds" ) )
 ```
 
+## Solve the model
 
+The gLV model was solved with the lsoda function (from the deSolve
+package version 1.24).
 
-## 5- Solve the model
-The gLV model was solved with the lsoda function (from the deSolve package version 1.24). 
-
-```{r solving the model, echo = TRUE, results = "hide" }
+``` r
 # Make a list of n.simulations
 community.times <- n.simulations %>% vector( mode = "list", length = . )
+# Make a list of n.simulations
+community.samples <- n.simulations %>% vector( mode = "list", length = . )
 
 # Do for every simulation
 for ( n in 1:length( community.times ) ) {
   # Make a list in the list of length N.samples
+  community.samples[[n]] <- matrix( NA, nrow = n.species, ncol = n.samples.total )
   community.times[[n]] <- n.samples.total %>% vector( mode = "list", length = . )
   
   tryCatch( {
@@ -264,8 +252,15 @@ for ( n in 1:length( community.times ) ) {
       # use times as colnames
       colnames( community.time ) = times
       
-      # Store the time series in the community times list
-      community.times[[n]][[o]]$community.time <- community.time
+      # Change the data to a data frame
+      abundances <- community.time %>% as.data.frame()
+      # Get the name of the last column
+      keep <- c( tend + 1 )
+      # Keep only the abundances at the last time point (preferably  in the equilibrium)
+      abundances <- abundances[keep] %>% simplify2array()
+      
+      # Store the abundances on the last time point in the list
+      community.samples[[n]][,o] <- abundances
     }
     # Do not stop the simulation because of an error or warning (but do not return any results)
   }, warning = function( e ){ return( NULL ) } )
@@ -274,55 +269,26 @@ for ( n in 1:length( community.times ) ) {
 }
 ```
 
-
-
 Choose a community and plot to see the time series.
 
-```{r plot the community, echo = TRUE}
-# pick one community
-choose.community <- community.times[[1]][[1]] %>% as.data.frame()
+``` r
 # show just one figure
 par( mfrow = c( 1, 1 ) )
 # make a time plot (from the package seqtime)
-choose.community %>% tsplot( ., legend = F )
+community.time %>% tsplot( ., legend = F )
 ```
 
+![](README_files/figure-gfm/plot%20the%20community-1.png)<!-- -->
 
+## The data
 
-## 6- The data
-Most gut microbiota studies are limited to only a few samples in time, presenting mere ‘snapshots’ of the intestinal ecosystem. 
+Most gut microbiota studies are limited to only a few samples in time,
+presenting mere ‘snapshots’ of the intestinal ecosystem.
 
-```{r Snapshot, echo = TRUE  }
-# Make a list of n.simulations
-community.samples <- n.simulations %>% vector( mode = "list", length = . )
+We added additive noise, drawn from a uniform distribution, to the
+outcome of the gLV model to represent uncertainty in measurements.
 
-# Do for every simulation, sample at the last timepoint
-for ( q in 1:length( community.samples ) ) {
-  # Create an empty data frame to store the results
-  community.samples[[q]] <- matrix( NA, nrow = n.species, ncol = n.samples.total )
-  
-  tryCatch({  
-    # Do for every sample / individual
-    for (r in 1:length( community.times[[q]] ) ) {
-      
-      # Change the data to a data frame
-      abundances <- community.times[[q]][[r]] %>% as.data.frame()
-      # Get the name of the last column
-      keep <- c( tend + 1 )
-      # Keep only the abundances at the last time point (preferably  in the equilibrium)
-      abundances <- abundances[keep] %>% simplify2array()
-      
-      # Store the abundances on the last time point in the list
-      community.samples[[q]][,r] <- abundances
-      
-    }
-  }, error = function( e ){ return( NULL ) } )
-}
-```
-
-We also added additive noise, drawn from a uniform distribution, to the outcome of the gLV model to represent uncertainty in measurements.
-
-```{r measurement noise, echo = TRUE  }
+``` r
 # Make a list of n.simulations
 community.samples.withnoise <- n.simulations %>% vector( mode = "list", length = . )
 
@@ -344,9 +310,10 @@ for (s in 1:length( community.samples.withnoise )) {
   }
 ```
 
-If species did not co-exist (when the abundance of a species drops below 0.001), we rejected the simulation. 
+If species did not co-exist (when the abundance of a species drops below
+0.001), we rejected the simulation.
 
-```{r remove species that got extinct, echo = TRUE  }
+``` r
 # Make a list of n.simulations
 community.samples.survival <- n.simulations %>% vector( mode = "list", length = . )
 
@@ -378,7 +345,18 @@ for ( t in 1:length( community.samples.survival ) ) {
 }
 ```
 
-```{r remove samples with not enough species, echo = TRUE }
+    [1]  10 396
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 395
+    [1]  10 399
+
+``` r
 # check if there are simulations with not enough species or samples
 removed.simulations.survival_error <- n.simulations %>% character()
 for ( u in 1:length( community.samples.survival ) ) {
@@ -390,20 +368,32 @@ for ( u in 1:length( community.samples.survival ) ) {
     removed.simulations.survival_error[[u]] <-print( NA )
   }
 }
+```
 
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+
+``` r
 # remove empty list elements
 community.samples.survival <- community.samples.survival %>% compact()
 ```
 
+The samples that are removed in the previous step, also needs to be
+removed from the parms data.
 
-The samples that are removed in the previous step, also needs to be removed from the parms data.
-
-```{r remove samples and species, echo = TRUE, error = TRUE  }
-
+``` r
 # Removed simulations after extinction of species
 removed.simulations <- removed.simulations.survival_error %>% as.numeric()
 
-# Save only the parms that were not removed (== NA) 
+# Keep only the parms that were not removed (== NA) 
 for (v in 1:length( parms )) {
   if ( removed.simulations[[v]]  %>% is.na() ) {
     parms[[v]] <- parms[[v]]
@@ -414,14 +404,13 @@ for (v in 1:length( parms )) {
 
 # Remove the simulations where errors or not enougs samples/species survived have occurred
 parms <- Filter( function( x ) any( unlist( x ) != 0 ), parms )
-
-# Save the new parms list
-parms %>% saveRDS( object = ., file = paste0( "parms_data_", Date, ".Rds" ) )
 ```
 
-We choose a higher number of samples than the preferred number we want to end up with. Therefore, randomly remove some of the samples to end up with the preferred number of samples in which all species coexist.
+We choose a higher number of samples than the preferred number we want
+to end up with. Therefore, randomly remove some of the samples to end up
+with the preferred number of samples in which all species coexist.
 
-```{r update parms, echo = TRUE}
+``` r
 # Make a list of n.simulations
 data <- length( community.samples.survival ) %>% vector( mode = "list", length = . )
 
@@ -431,7 +420,7 @@ for ( w in 1:length( data ) ) {
   samples.left <- nrow( community.samples.survival[[w]][["data"]] ) 
   # Get the number of samples that needs to be removed
   n.samples.to.remove = samples.left - n.samples
-  # Transpose the data and save as data.frame
+  # Transpose the data
   data.samples <- community.samples.survival[[w]][["data"]] %>% t() %>% as.data.frame()
   # Choose the samples that will be removed
   samples.to.remove <- data.samples %>% 
@@ -451,12 +440,18 @@ for ( x in 1:length( data ) ) {
 
 # Number of species
 data[[1]][["data"]] %>% ncol()
+```
+
+    [1] 10
+
+``` r
 # Number of samples
 data[[1]][["data"]] %>% nrow()
+```
 
-# Save the parms list
-data %>% saveRDS( object = ., file = paste0( "Final_data_", Date, ".Rds" ) )
+    [1] 300
 
+``` r
 # Make a list of n.simulations
 names <- length( data ) %>% vector( mode = "list", length = . )
 
@@ -465,17 +460,13 @@ for ( y in 1:length( data ) ) {
   names[[y]][["Samples"]] <- rownames( data[[y]][["data"]] )
   names[[y]][["Species"]] <- colnames( data[[y]][["data"]] )
 }
-
-# Save a list with all species names
-names %>% saveRDS( object = ., file = paste0("names_data_", Date, ".Rds" ) )
-
 ```
 
+## Calculate the partial correlations
 
-## 7- Calculate the partial correlations
-First, we calculate the partial correlations and save these.
+First, we calculate the partial correlations.
 
-```{r partial correlations, echo = TRUE  }
+``` r
 # Make a list of length  data
 results.pcor <- length( data ) %>% vector( mode = "list", length = . )
 
@@ -494,14 +485,15 @@ for ( i in 1:length( data ) ) {
   # Store the results in the list
   results.pcor[[i]]$pcor <- pcor %>% as.matrix()
 }
-
-# Save the results list
-results.pcor %>% saveRDS( object = ., file = paste0( "Partial_correlations_", Date, "_Results.Rds" ) )
 ```
 
-Hereafter we should keep only the significant partial correlations. These significant correlation matrices are transformed to a matrix where, negative correlations are assigned a "-1", positive correlations are assigned a "1" and if a correlations was not significant than the value "0" is implemented.
+Hereafter we should keep only the significant partial correlations.
+These significant correlation matrices are transformed to a matrix
+where, negative correlations are assigned a “-1”, positive correlations
+are assigned a “1” and if a correlations was not significant than the
+value “0” is implemented.
 
-```{r significant correlations, echo = TRUE  }
+``` r
 # Do for all the pcors
 pcor.pvalues.significant <- length( results.pcor ) %>% vector( mode = "list", length = . )
 
@@ -539,18 +531,14 @@ for ( i in 1:length( results.pcor ) ) {
   # Store in the results
   pcor.pvalues.significant[[i]] <- pcor.pvalues.sign
 }
-
-# save the results list
-pcor.pvalues.significant %>% saveRDS( object = ., file = paste0( "Partial_correlations_sign_",
-                                                                 Date, "_Results.Rds" ) )
 ```
 
+## Calculate precision, recall and the F1-score
 
+These measures are used to compare the original interaction matrix from
+the model with the inferred significant partial correlations.
 
-## 8- Calculate precision, recall and the F1-score
-These measures are used to compare the original interaction matrix from the model with the inferred significant partial correlations. 
-
-```{r prepare the data, echo = TRUE}
+``` r
 # Make a list 
 a.matrix.analysis <- list() 
 
@@ -566,12 +554,13 @@ for ( i in 1:length( parms ) ) {
 
 # Flatten the list of lists
 a.matrix.analysis <- a.matrix.analysis %>% flatten()
-
 ```
 
-After selecting the variables of interest, the interaction matrix is transformed similar to the significant partial correlation matrix, with the -1, 0 and 1 for respectively negative, no and positive interactions.
+After selecting the variables of interest, the interaction matrix is
+transformed similar to the significant partial correlation matrix, with
+the -1, 0 and 1 for respectively negative, no and positive interactions.
 
-```{r transform the interaction matrix, echo = TRUE}
+``` r
 # Do for the a.matrices
 a.matrix.round <- length( a.matrix.analysis ) %>% vector( mode = "list", length = . )
 
@@ -590,7 +579,7 @@ for ( i in 1:length( a.matrix.round ) ) {
 
 Calculate the confusion matrix
 
-```{r confusion matrix, echo = TRUE}
+``` r
 # Make a new list
 confusion.matrix <- length(a.matrix.round) %>% vector( mode = "list", length = . )
 
@@ -662,14 +651,11 @@ for ( i in 1:length( a.matrix.round ) ) {
     }
   }
 }
-
-# Save the confusion matrices list
-confusion.matrix %>% saveRDS( object = ., file = paste0( "confusion.matrix_", Date, "_Results.Rds" ) )
 ```
 
 Calculate the precision, recall and f1 score
 
-```{r scores,  , echo = TRUE}
+``` r
 # Make a new list
 F1.score <- length( confusion.matrix ) %>% vector( mode = "list", length = . )
 
@@ -691,13 +677,11 @@ for ( i in 1:length( confusion.matrix ) ) {
   F1score <- 2 * ( ( precision * recall ) / ( precision + recall ) )
   F1.score[[i]]$F1score <- F1score
 }
-
-# Save the precision,recall and F1scores list
-F1.score %>% saveRDS( object = ., file = paste0("F1.score_", Date, "_Results.Rds" ) )
 ```
 
-Plot the results 
-```{r plot the results, echo = TRUE}
+Plot the results
+
+``` r
 # Make an empty data frame
 F1.score.data <- matrix( 0, nrow = length( F1.score ), ncol = 3 )
 
@@ -716,6 +700,14 @@ colnames( F1.score.data ) <- c( "Precision", " Recall", " F1.score" )
 
 F1.score.data.2 <- F1.score.data %>% melt( ., id.vars = "F1.score" )
 str( F1.score.data.2 )
+```
+
+    'data.frame':   30 obs. of  3 variables:
+     $ Var1 : int  1 2 3 4 5 6 7 8 9 10 ...
+     $ Var2 : Factor w/ 3 levels "Precision"," Recall",..: 1 1 1 1 1 1 1 1 1 1 ...
+     $ value: num  0.8 1 0.8 1 0.75 1 1 0 1 0.8 ...
+
+``` r
 F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ) )
 
 # Make the boxplot
@@ -736,3 +728,5 @@ boxplot <- ggplot( data = F1.score.data.2,
 # Plot the boxplot
 boxplot
 ```
+
+![](README_files/figure-gfm/plot%20the%20results-1.png)<!-- -->
