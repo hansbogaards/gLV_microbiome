@@ -72,7 +72,7 @@ n.simulations = 10
 # Size of the population / total number of species
 n.species = 10
 
-# Number of samples (people)
+# Number of samples (hosts)
 n.samples = 300
 # Later the samples with species that go extinct are removed, therefor simulate more samples than preferred 
 n.samples.total = 400
