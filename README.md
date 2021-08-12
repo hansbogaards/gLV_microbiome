@@ -30,10 +30,10 @@ library( tidyverse )
 library( deSolve )
 library( seqtime ) 
 library( purrr )
-library( ggplot2 )
 library( reshape2 )
 library( truncnorm )
 library( Matrix )
+library( ggplot2 )
 ```
 
 
@@ -62,7 +62,7 @@ gLV.model <- function( time, y, parms ) {
 First set some standard settings. Optionally you can choose a different number of species and samples. 
 
 ```{r settings, echo = TRUE}
-# Set date / time of the simulation  
+# Set date and time of the simulation  
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
@@ -99,12 +99,12 @@ parms <- n.simulations %>% vector( mode = "list", length = . )
 
 # Do the simulation n.simulations * n.samples times
 for ( j in 1:length( parms ) ) {
-  # make a list in the list of length N.samples
+  # Make a list in the list of length N.samples
   parms[[j]] <- n.samples.total %>% vector( mode = "list", length = . )
   
   for ( k in 1:n.samples.total ) {
     
-    # use the seeds
+    # Use the seeds
     seed[j] %>% set.seed()
     
     # Set random parameters
@@ -639,7 +639,6 @@ F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ) )
 # Make the boxplot
 boxplot <- ggplot( data = F1.score.data.2, 
                    mapping = aes( x = Var2, y = value ) ) +
-  # Make a boxplot
   geom_boxplot() +
   # Name the labels
   labs( x = "Score type", y = "Value" ) +
