@@ -180,11 +180,11 @@ for ( l in 1:length( parms ) ) {
     # Only add noise when the value in the A.matrix is not 0
     parms[[l]][[m]]$a_ijm <- ifelse( parms[[l]][[m]]$A.matrix != 0, parms[[l]][[m]]$A.matrix * exp( noise.on.a_ij ), 0 )
     
-    # Add noise to the growth rates
+    # Add noise to the growth rates (in the base case this noise is 0)
     noise.on.r_i <- n.species %>% rnorm( ., 0, 0 )
     parms[[l]][[m]]$r_im <- parms[[l]][[m]]$r_i * exp( noise.on.r_i )
     
-    # Add noise to the carrying capacities
+    # Add noise to the carrying capacities (in the base case this noise is 0)
     noise.on.K_i <- n.species %>% rnorm( ., 0, 0 )
     parms[[l]][[m]]$K_im <- parms[[l]][[m]]$K_i * exp( noise.on.K_i )
   }
