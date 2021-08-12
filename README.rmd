@@ -639,7 +639,6 @@ F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ) )
 # Make the boxplot
 boxplot <- ggplot( data = F1.score.data.2, 
                    mapping = aes( x = Var2, y = value ) ) +
-  # Make a boxplot
   geom_boxplot() +
   # Name the labels
   labs( x = "Score type", y = "Value" ) +
