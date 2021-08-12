@@ -1,31 +1,44 @@
----
-title: R code "Correlations cannot distinguish interaction types in microbial networks"
-author: "Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards"
-output: 
-  github_document:
-    toc: true
-    toc_depth: 3
-editor_options:
-  chunk_output_type: console
----
+R code “Correlations cannot distinguish interaction types in microbial
+networks”
+================
+Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and
+Johannes A. Bogaards
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  echo = TRUE, message = FALSE, warning = FALSE, comment = NA, cache = TRUE,
-  fig.width = 7, fig.height = 7)
-```
-
+-   [Introduction](#introduction)
+-   [Load the packages](#load-the-packages)
+-   [The generalized host-specific Lotka-Volterra
+    model](#the-generalized-host-specific-lotka-volterra-model)
+-   [Choose your settings and draw random
+    parameters](#choose-your-settings-and-draw-random-parameters)
+-   [Solve the model](#solve-the-model)
+-   [Create the dataset](#create-the-dataset)
+-   [Calculate the partial
+    correlations](#calculate-the-partial-correlations)
+-   [Calculate precision, recall and the
+    F1-scores](#calculate-precision-recall-and-the-f1-scores)
 
 ## Introduction
-R code belonging to the paper: “Correlations cannot distinguish interaction types in microbial networks” by Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards. This document shows the script used to perform the base case study of the paper.
 
-We assessed how correlations between bacterial groups are shaped by their ecological interactions, and how correlations can be employed to signify these interactions. We specifically investigate how inference of microbial interactions is affected by interindividual variation in process parameters, and mainly focus on the necessary model assumptions and the meaning of the obtained correlation-based networks. We use the generalized Lotka-Volterra (gLV) model to demonstrate the performance of correlation-based network reconstruction.
+R code belonging to the paper: “Correlations cannot distinguish
+interaction types in microbial networks” by Susanne Pinto, Elisa
+Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards.
+This document shows the script used to perform the base case study of
+the paper.
 
+We assessed how correlations between bacterial groups are shaped by
+their ecological interactions, and how correlations can be employed to
+signify these interactions. We specifically investigate how inference of
+microbial interactions is affected by interindividual variation in
+process parameters, and mainly focus on the necessary model assumptions
+and the meaning of the obtained correlation-based networks. We use the
+generalized Lotka-Volterra (gLV) model to demonstrate the performance of
+correlation-based network reconstruction.
 
 ## Load the packages
+
 Load the packages in R.
 
-```{r load the packages, echo = TRUE, results = FALSE}
+``` r
 library( tidyverse )
 library( deSolve )
 library( seqtime ) 
@@ -36,13 +49,15 @@ library( Matrix )
 library( ggplot2 )
 ```
 
-
-
 ## The generalized host-specific Lotka-Volterra model
-We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species **i** with intrinsic growth rates (**r**), carrying capacities (**K**) and interactions with other species (**a**) that are specific for species **i** as well as for host **m** (see methods).
 
+We simulated bacterial communities by means of the generalized
+Lotka-Volterra (gLV) model. We simulated the population growth of
+species *i* with intrinsic growth rates (*r*), carrying capacities (*K*)
+and interactions with other species (*a*) that are specific for species
+*i* as well as for host *m* (see methods).
 
-```{r the model, echo = TRUE}
+``` r
 gLV.model <- function( time, y, parms ) { 
   r_im = parms$r_im %>% as.numeric()
   K_im = parms$K_im %>% as.numeric() 
@@ -56,12 +71,12 @@ gLV.model <- function( time, y, parms ) {
 } 
 ```
 
-
-
 ## Choose your settings and draw random parameters
-First set some standard settings. Optionally you can choose a different number of species and samples. 
 
-```{r settings, echo = TRUE}
+First set some standard settings. Optionally you can choose a different
+number of species and samples.
+
+``` r
 # Set date and time of the simulation  
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
@@ -86,14 +101,15 @@ times <- seq( from = tstart, to = tend, by = tstep )
 
 Set your seeds for reproducibility.
 
-```{r set seeds, echo = TRUE}
+``` r
 # Sample integers for seeds
 seed <- 100000 %>% sample.int( ., n.simulations, replace = FALSE )
 ```
 
-With the following script the growth rates, carrying capacities and the interaction matrix are computed randomly from a chosen distribution.
+With the following script the growth rates, carrying capacities and the
+interaction matrix are computed randomly from a chosen distribution.
 
-```{r random parameters, echo = TRUE}
+``` r
 # Make a list of n.simulations
 parms <- n.simulations %>% vector( mode = "list", length = . )
 
@@ -163,16 +179,21 @@ for ( j in 1:length( parms ) ) {
 
 Visualize one of the interaction matrices
 
-```{r visualize matrix, echo = TRUE}
+``` r
 # Visualize one interaction matrix
 A.matrix_sparse <- parms[[1]][[1]]$A.matrix %>% Matrix(., sparse=TRUE)
 A.matrix_sparse %>% image(main = "Interaction matrix (A matrix)", 
                           xlab = "Bacterial species", ylab = "Bacterial species")
 ```
 
-We added multiplicative noise to the parameters to make them host specific. Here only the interspecies interactions are host specific, but it is possible to make the growth rates and carrying capacities also host-specific.
+![](README_files/figure-gfm/visualize%20matrix-1.png)<!-- -->
 
-```{r multiplicative noise, echo = TRUE}
+We added multiplicative noise to the parameters to make them host
+specific. Here only the interspecies interactions are host specific, but
+it is possible to make the growth rates and carrying capacities also
+host-specific.
+
+``` r
 for ( l in 1:length( parms ) ) {
   for ( m in 1:n.samples.total ) {
     # Add noise to the interaction matrix A
@@ -191,13 +212,15 @@ for ( l in 1:length( parms ) ) {
 }
 ```
 
-
-
 ## Solve the model
-The gLV model was solved with the lsoda function (from the deSolve package version 1.24). Because, most gut microbiota studies are limited to only a few samples in time, presenting mere ‘snapshots’ of the intestinal ecosystem, we only 'took' one sample of the species abundances in the equilibrium. 
 
+The gLV model was solved with the lsoda function (from the deSolve
+package version 1.24). Because, most gut microbiota studies are limited
+to only a few samples in time, presenting mere ‘snapshots’ of the
+intestinal ecosystem, we only ‘took’ one sample of the species
+abundances in the equilibrium.
 
-```{r solving the model, echo = TRUE, results = "hide" }
+``` r
 # Make a list of n.simulations to store the time series
 community.times <- n.simulations %>% vector( mode = "list", length = . )
 # Make a list of n.simulations to store the samples taken during equilibrium
@@ -244,25 +267,26 @@ for ( n in 1:length( community.times ) ) {
   # Print number of simulation, to see progress
   n %>% print()
 }
-
 ```
-
-
 
 Choose a community and plot to see the time series.
 
-```{r plot the community, echo = TRUE}
+``` r
 # Show just one figure
 par( mfrow = c( 1, 1 ) )
 # Make a time plot (from the package seqtime)
 community.time %>% tsplot( ., legend = T, title = "A host specific timeseries" )
 ```
 
+![](README_files/figure-gfm/plot%20the%20community-1.png)<!-- -->
 
 ## Create the dataset
-We added additive noise, drawn from a uniform distribution, to the abundances sampled in equilibrium to represent uncertainty in measurements.
 
-```{r measurement noise, echo = TRUE  }
+We added additive noise, drawn from a uniform distribution, to the
+abundances sampled in equilibrium to represent uncertainty in
+measurements.
+
+``` r
 # Make a list of n.simulations
 community.samples.withnoise <- n.simulations %>% vector( mode = "list", length = . )
 
@@ -284,9 +308,10 @@ for (s in 1:length( community.samples.withnoise )) {
   }
 ```
 
-If species did not co-exist (when the abundance of a species drops below 0.001), we rejected the simulation. 
+If species did not co-exist (when the abundance of a species drops below
+0.001), we rejected the simulation.
 
-```{r remove species that got extinct, echo = TRUE  }
+``` r
 # Make a list of n.simulations
 community.samples.survival <- n.simulations %>% vector( mode = "list", length = . )
 
@@ -318,7 +343,18 @@ for ( t in 1:length( community.samples.survival ) ) {
 }
 ```
 
-```{r remove samples with not enough species, echo = TRUE }
+    [1]  10 396
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 400
+    [1]  10 395
+    [1]  10 399
+
+``` r
 # Check if there are simulations with not enough species or samples
 removed.simulations.survival_error <- n.simulations %>% character()
 for ( u in 1:length( community.samples.survival ) ) {
@@ -330,16 +366,28 @@ for ( u in 1:length( community.samples.survival ) ) {
     removed.simulations.survival_error[[u]] <-print( NA )
   }
 }
+```
 
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+    [1] NA
+
+``` r
 # Remove empty list elements
 community.samples.survival <- community.samples.survival %>% compact()
 ```
 
+The samples that are removed in the previous step, also needs to be
+removed from the parms data.
 
-The samples that are removed in the previous step, also needs to be removed from the parms data.
-
-```{r remove samples and species, echo = TRUE, error = TRUE  }
-
+``` r
 # Removed simulations after extinction of species
 removed.simulations <- removed.simulations.survival_error %>% as.numeric()
 
@@ -356,9 +404,11 @@ for (v in 1:length( parms )) {
 parms <- Filter( function( x ) any( unlist( x ) != 0 ), parms )
 ```
 
-We choose a higher number of samples than the preferred number we want to end up with. Therefore, randomly remove some of the samples to end up with the preferred number of samples in which all species coexist.
+We choose a higher number of samples than the preferred number we want
+to end up with. Therefore, randomly remove some of the samples to end up
+with the preferred number of samples in which all species coexist.
 
-```{r update parms, echo = TRUE}
+``` r
 # Make a list of n.simulations
 data <- length( community.samples.survival ) %>% vector( mode = "list", length = . )
 
@@ -388,9 +438,18 @@ for ( x in 1:length( data ) ) {
 
 # Number of species
 data[[1]][["data"]] %>% ncol()
+```
+
+    [1] 10
+
+``` r
 # Number of samples
 data[[1]][["data"]] %>% nrow()
+```
 
+    [1] 300
+
+``` r
 # Make a list of n.simulations
 names <- length( data ) %>% vector( mode = "list", length = . )
 
@@ -399,14 +458,13 @@ for ( y in 1:length( data ) ) {
   names[[y]][["Samples"]] <- rownames( data[[y]][["data"]] )
   names[[y]][["Species"]] <- colnames( data[[y]][["data"]] )
 }
-
 ```
 
-
 ## Calculate the partial correlations
+
 First, we calculate the partial correlations.
 
-```{r partial correlations, echo = TRUE  }
+``` r
 # Make a list of length  data
 results.pcor <- length( data ) %>% vector( mode = "list", length = . )
 
@@ -427,9 +485,14 @@ for ( i in 1:length( data ) ) {
 }
 ```
 
-Hereafter we should keep only the significant partial correlations (corrected with the Benjamini Hochberg procedure). These significant correlation matrices are transformed to a matrix where, negative correlations are assigned a "-1", positive correlations are assigned a "1" and if a correlations was not significant than the value "0" is implemented.
+Hereafter we should keep only the significant partial correlations
+(corrected with the Benjamini Hochberg procedure). These significant
+correlation matrices are transformed to a matrix where, negative
+correlations are assigned a “-1”, positive correlations are assigned a
+“1” and if a correlations was not significant than the value “0” is
+implemented.
 
-```{r significant correlations, echo = TRUE  }
+``` r
 # Do for all the pcors
 pcor.pvalues.significant <- length( results.pcor ) %>% vector( mode = "list", length = . )
 
@@ -469,12 +532,12 @@ for ( i in 1:length( results.pcor ) ) {
 }
 ```
 
-
-
 ## Calculate precision, recall and the F1-scores
-These measures are used to compare the original interaction matrix from the model with the inferred significant partial correlations. 
 
-```{r prepare the data, echo = TRUE}
+These measures are used to compare the original interaction matrix from
+the model with the inferred significant partial correlations.
+
+``` r
 # Make a list 
 A.matrix.analysis <- list() 
 
@@ -490,12 +553,14 @@ for ( i in 1:length( parms ) ) {
 
 # Flatten the list of lists
 A.matrix.analysis <-A.matrix.analysis %>% flatten()
-
 ```
 
-After selecting the variables of interest, the interaction matrix is transformed in a similar way as the significant partial correlation matrix, with the -1, 0 and 1 for respectively negative, none and positive interactions.
+After selecting the variables of interest, the interaction matrix is
+transformed in a similar way as the significant partial correlation
+matrix, with the -1, 0 and 1 for respectively negative, none and
+positive interactions.
 
-```{r transform the interaction matrix, echo = TRUE}
+``` r
 # Do for the a.matrices
 A.matrix.round <- length(A.matrix.analysis ) %>% vector( mode = "list", length = . )
 
@@ -514,7 +579,7 @@ for ( i in 1:length(A.matrix.round ) ) {
 
 Calculate the confusion matrix.
 
-```{r confusion matrix, echo = TRUE}
+``` r
 # Make a new list
 confusion.matrix <- length(A.matrix.round) %>% vector( mode = "list", length = . )
 
@@ -590,7 +655,7 @@ for ( i in 1:length(A.matrix.round ) ) {
 
 Calculate the precision, recall and F1-scores
 
-```{r scores,  , echo = TRUE}
+``` r
 # Make a list to store the results
 F1.score <- length( confusion.matrix ) %>% vector( mode = "list", length = . )
 
@@ -614,8 +679,9 @@ for ( i in 1:length( confusion.matrix ) ) {
 }
 ```
 
-Plot the results 
-```{r plot the results, echo = TRUE}
+Plot the results
+
+``` r
 # Make an empty dataframe
 F1.score.data <- matrix( 0, nrow = length( F1.score ), ncol = 3 )
 
@@ -634,6 +700,14 @@ colnames( F1.score.data ) <- c( "Precision", " Recall", " F1.score" )
 
 F1.score.data.2 <- F1.score.data %>% melt( ., id.vars = "F1.score" )
 str( F1.score.data.2 )
+```
+
+    'data.frame':   30 obs. of  3 variables:
+     $ Var1 : int  1 2 3 4 5 6 7 8 9 10 ...
+     $ Var2 : Factor w/ 3 levels "Precision"," Recall",..: 1 1 1 1 1 1 1 1 1 1 ...
+     $ value: num  0.333 0 0.25 0.25 0 ...
+
+``` r
 F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ) )
 
 # Make the boxplot
@@ -654,3 +728,5 @@ boxplot <- ggplot( data = F1.score.data.2,
 # Plot the boxplot
 boxplot
 ```
+
+![](README_files/figure-gfm/plot%20the%20results-1.png)<!-- -->

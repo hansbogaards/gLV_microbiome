@@ -39,7 +39,7 @@ library( ggplot2 )
 
 
 ## The generalized host-specific Lotka-Volterra model
-We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species **i** with intrinsic growth rates (**r**), carrying capacities (**K**) and interactions with other species (**a**) that are specific for species **i** as well as for host **m** (see methods).
+We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species *i* with intrinsic growth rates (*r*), carrying capacities (*K*) and interactions with other species (*a*) that are specific for species *i* as well as for host *m* (see methods).
 
 
 ```{r the model, echo = TRUE}
