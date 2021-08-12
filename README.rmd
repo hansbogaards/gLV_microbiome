@@ -30,10 +30,10 @@ library( tidyverse )
 library( deSolve )
 library( seqtime ) 
 library( purrr )
-library( ggplot2 )
 library( reshape2 )
 library( truncnorm )
 library( Matrix )
+library( ggplot2 )
 ```
 
 
@@ -62,7 +62,7 @@ gLV.model <- function( time, y, parms ) {
 First set some standard settings. Optionally you can choose a different number of species and samples. 
 
 ```{r settings, echo = TRUE}
-# Set date / time of the simulation  
+# Set date and time of the simulation  
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
