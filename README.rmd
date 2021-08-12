@@ -44,7 +44,6 @@ We simulated bacterial communities by means of the generalized Lotka-Volterra (g
 
 ```{r the model, echo = TRUE}
 gLV.model <- function( time, y, parms ) { 
-  # Change the parms to the .noise version if desirable  
   r_im = parms$r_im %>% as.numeric()
   K_im = parms$K_im %>% as.numeric() 
   a_ijm = parms$a_ijm %>% as.matrix() 
