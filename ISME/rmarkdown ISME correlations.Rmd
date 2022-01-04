@@ -1,50 +1,38 @@
 ---
-title: R code "Correlations cannot distinguish interaction types in microbial networks"
+title: "R code: Correlations cannot distinguish interaction types in microbial networks"
 author: "Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards"
-date: "21/05/2021"
-output:
-  html_document: default
-  word_document: default
-  pdf_document: default
-  github_document: default
+output: html_document
+
 ---
 
-# Contents
-### 1- Introduction
-### 2- Load the packages
-### 3- The generalized host-specific Lotka-Volterra model
-### 4- Choose your settings and draw random parameters
-### 5- Solve the model
-### 6- Create the dataset
-### 7- Calculate the partial correlations
-### 8- Calculate the precision, recall and F1 scores
-
-
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Introduction
 R code belonging to the paper: “Correlations cannot distinguish interaction types in microbial networks” by Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards. This document shows the script used to perform the base case study of the paper.
 
-We assessed how correlations between bacterial groups are shaped by their ecological interactions, and how correlations can be employed to signify these interactions. We specifically investigate how inference of microbial interactions is affected by interindividual variation in process parameters, and mainly focus on the necessary model assumptions and the meaning of the obtained correlation-based networks. We use the generalized Lotka-Volterra (gLV) model to demonstrate the performance of correlation-based network reconstruction.
+In addressing how gLV-type interactions can be inferred from cross-sectional data, we mainly focus on the correspondence between the obtained correlation-based networks and the underlying network of ecological interactions. We specifically investigate how inference of microbial interactions is affected by interindividual variation in process parameters, and mainly focus on the necessary model assumptions and the meaning of the obtained correlation-based networks. We use the generalized Lotka-Volterra (gLV) model to demonstrate the performance of correlation-based network reconstruction.
 
 
 ## Load the packages
 Load the packages in R.
 
-```{r load the packages, echo = TRUE, results = FALSE}
+```{r load the packages, echo = TRUE, message = FALSE}
 library( tidyverse )
 library( deSolve )
 library( seqtime ) 
 library( purrr )
-library( ggplot2 )
 library( reshape2 )
 library( truncnorm )
 library( Matrix )
+library( ggplot2 )
 ```
 
 
 
 ## The generalized host-specific Lotka-Volterra model
-We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species *i* with intrinsic growth rate (*r*), carrying capacity (*K*) and interactions with other species (*a*) that are specific for species *i* as well as for host *m* (see methods).
+We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species *i* with intrinsic growth rates (*r*), carrying capacities (*K*) and interactions with other species (*a*) that are specific for species *i* as well as for host *m* (see methods).
 
 
 ```{r the model, echo = TRUE}
@@ -53,10 +41,10 @@ gLV.model <- function( time, y, parms ) {
   K_im = parms$K_im %>% as.numeric() 
   a_ijm = parms$a_ijm %>% as.matrix() 
   
-  # The host specific gLV function
+  # The function
   dydt <- r_im * y * ( 1 - ( 1/K_im ) * y + ( a_ijm %*% y ))
   
-  # Store the data in a list
+  # Store data in a list
   dydt %>% list() 
 } 
 ```
@@ -67,7 +55,7 @@ gLV.model <- function( time, y, parms ) {
 First set some standard settings. Optionally you can choose a different number of species and samples. 
 
 ```{r settings, echo = TRUE}
-# Set date / time of the simulation  
+# Set date and time of the simulation  
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
@@ -77,14 +65,15 @@ n.simulations = 10
 # Size of the population / total number of species
 n.species = 10
 
-# Number of samples (people)
+# Number of samples (hosts)
 n.samples = 300
 # Later the samples with species that go extinct are removed, therefor simulate more samples than preferred 
 n.samples.total = 400
 
 # Timescale
+# Make the time series long enough to ensure that all species reach their equilibrium abundances
 tstart = 0
-tend = 150
+tend = 175
 tstep = 1
 times <- seq( from = tstart, to = tend, by = tstep ) 
 ```
@@ -104,17 +93,17 @@ parms <- n.simulations %>% vector( mode = "list", length = . )
 
 # Do the simulation n.simulations * n.samples times
 for ( j in 1:length( parms ) ) {
-  # make a list in the list of length N.samples
+  # Make a list in the list of length N.samples
   parms[[j]] <- n.samples.total %>% vector( mode = "list", length = . )
   
   for ( k in 1:n.samples.total ) {
     
-    # use the seeds
+    # Use the seeds
     seed[j] %>% set.seed()
     
     # Set random parameters
 
-    # initial abundances per species
+    # Initial abundances per species
     parms[[j]][[k]]$yini = n.species %>% runif( ., 0, 1 ) 
     # Intrinsic growth rates per species
     # Keep them positive to make all the species able to grow on their own
@@ -145,22 +134,22 @@ for ( j in 1:length( parms ) ) {
     positive_interactions <- positive_interactions[ -sample( which( positive_interactions == 0), n.species/ 2 ) ]
     
     # Combine positive and negative interactions into a gaussian mixture distribution
-    data.all <- c(negative_interactions, positive_interactions)
+    data.all <- c( negative_interactions, positive_interactions )
     # Randomize order
     data.all <- data.all %>% sample
     
     # Make an empty A matrix with diagonal 0 
    A.matrix <- matrix( NA, ncol = n.species, nrow = n.species )
-    diag(A.matrix ) = 0
+    diag( A.matrix ) = 0
     
     # Fill in the A matrix (but not the diagonal)
    A.matrix <- data.all %>% ifelse( is.na(A.matrix ), ., 0 )
 
     # Set the row- and column names
-    rownames(A.matrix ) <- "Species." %>% paste0( ., 1:n.species )
-    colnames(A.matrix ) <- "Species." %>% paste0( ., 1:n.species )
+    rownames( A.matrix ) <- "Species." %>% paste0( ., 1:n.species )
+    colnames( A.matrix ) <- "Species." %>% paste0( ., 1:n.species )
     
-    parms[[j]][[k]]$A.matrix <-A.matrix
+    parms[[ j ]][[ k ]]$A.matrix <-A.matrix
     
   }
 }
@@ -170,12 +159,12 @@ Visualize one of the interaction matrices
 
 ```{r visualize matrix, echo = TRUE}
 # Visualize one interaction matrix
-A.matrix_sparse <- parms[[1]][[1]]$A.matrix %>% Matrix(., sparse=TRUE)
-A.matrix_sparse %>% image(main = "Interaction matrix (A matrix)", 
-                          xlab = "Bacterial species", ylab = "Bacterial species")
+A.matrix_sparse <- parms[[ 1 ]][[ 1 ]]$A.matrix %>% Matrix( ., sparse=TRUE )
+A.matrix_sparse %>% image( main = "Interaction matrix (A matrix)", 
+                          xlab = "Bacterial species", ylab = "Bacterial species" )
 ```
 
-We added multiplicative noise to the parameters to make them host specific. Here only the interspecies interactions are host specific, but it is possible to make the growth rates and carrying capacities also host-specific.
+We added multiplicative noise to the parameters to make them host specific. In the base case only the interspecific interactions are host specific, but it is possible to make the growth rates and carrying capacities also host-specific.
 
 ```{r multiplicative noise, echo = TRUE}
 for ( l in 1:length( parms ) ) {
@@ -185,11 +174,11 @@ for ( l in 1:length( parms ) ) {
     # Only add noise when the value in the A.matrix is not 0
     parms[[l]][[m]]$a_ijm <- ifelse( parms[[l]][[m]]$A.matrix != 0, parms[[l]][[m]]$A.matrix * exp( noise.on.a_ij ), 0 )
     
-    # Add noise to the growth rates
+    # Add noise to the growth rates (in the base case this noise is 0)
     noise.on.r_i <- n.species %>% rnorm( ., 0, 0 )
     parms[[l]][[m]]$r_im <- parms[[l]][[m]]$r_i * exp( noise.on.r_i )
     
-    # Add noise to the carrying capacities
+    # Add noise to the carrying capacities (in the base case this noise is 0)
     noise.on.K_i <- n.species %>% rnorm( ., 0, 0 )
     parms[[l]][[m]]$K_im <- parms[[l]][[m]]$K_i * exp( noise.on.K_i )
   }
@@ -199,7 +188,7 @@ for ( l in 1:length( parms ) ) {
 
 
 ## Solve the model
-The gLV model was solved with the lsoda function (from the deSolve package version 1.24). Because, most gut microbiota studies are limited to only a few samples in time, presenting mere ‘snapshots’ of the intestinal ecosystem, we only 'took' one sample of the species abundances in the equilibrium. 
+The gLV model was solved with the lsoda function (from the deSolve package version 1.24). Because, most gut microbiota studies are limited to only a few samples in time, presenting mere ‘snapshots’ of the intestinal ecosystem, in the base case study, only  one sample was 'taken' of the species abundances in the equilibrium. 
 
 
 ```{r solving the model, echo = TRUE, results = "hide" }
@@ -219,7 +208,7 @@ for ( n in 1:length( community.times ) ) {
     # Do for every sample / individual
     for ( o in 1:length( community.times[[n]] ) ) {
       
-      # Random yini than yini = N.species.total %>% runif()
+      # Solve the model with the chosen parameters
       community.time = lsoda( y = parms[[n]][[o]][ c( "yini" ) ] %>% unlist %>% as.numeric, 
                               times = times, 
                               func = gLV.model, 
@@ -260,7 +249,7 @@ Choose a community and plot to see the time series.
 # Show just one figure
 par( mfrow = c( 1, 1 ) )
 # Make a time plot (from the package seqtime)
-community.time %>% tsplot( ., legend = T, title = "A host specific timeseries" )
+community.time %>% tsplot( ., legend = T )
 ```
 
 
@@ -289,7 +278,7 @@ for (s in 1:length( community.samples.withnoise )) {
   }
 ```
 
-If species did not co-exist (when the abundance of a species drops below 0.001), we rejected the simulation. 
+If species did not co-exist (when the abundance of a species fall below 0.001), we rejected the simulation. 
 
 ```{r remove species that got extinct, echo = TRUE  }
 # Make a list of n.simulations
@@ -298,13 +287,13 @@ community.samples.survival <- n.simulations %>% vector( mode = "list", length = 
 for ( t in 1:length( community.samples.survival ) ) {
   # Transpose the dataset
   community.samples.transpose <- community.samples.withnoise[[t]] %>% t()
-  # Change the values of species with an abundance below 0.01 to NA
+  # Change the values of species with an abundance below 0.001 to NA
   community.samples.survive <- ifelse( community.samples.transpose < 0.001, NA, 
                                        community.samples.transpose )
   community.samples.survive <- community.samples.survive %>%  as.data.frame()
   # Remove columns with all NAs
   community.samples.survive <- Filter( function( x ) !all( is.na( x ) ), community.samples.survive )
-  # Remove rows with some NAs
+  # Remove rows with at least one NA
   community.samples.survive <- community.samples.survive[complete.cases( community.samples.survive ), ] %>% data.frame()
   
   # Number of species left
@@ -432,7 +421,7 @@ for ( i in 1:length( data ) ) {
 }
 ```
 
-Hereafter we should keep only the significant partial correlations (corrected with the Benjamini Hochberg procedure). These significant correlation matrices are transformed to a matrix where, negative correlations are assigned a "-1", positive correlations are assigned a "1" and if a correlations was not significant than the value "0" is implemented.
+Hereafter we should keep only the significant partial correlations (corrected with the Benjamini Hochberg procedure). These significant correlation matrices are transformed to a matrix where, negative correlations are assigned a "-1", positive correlations are assigned a "1" and if a correlation was not significant than the value "0" is implemented.
 
 ```{r significant correlations, echo = TRUE  }
 # Do for all the pcors
@@ -450,27 +439,27 @@ for ( i in 1:length( results.pcor ) ) {
   pcor.pvalues <- 2 * pnorm( -abs( pcor.statistic ) )
   
   # Adjust the p-values with Benjamini Hochberg procedure
-  pcor.pvalues.adjusted <- array(NA, dim=dim(pcor.pvalues))
-  names <- colnames(pcor.pvalues)
-  colnames(pcor.pvalues.adjusted) <- names
-  rownames(pcor.pvalues.adjusted) <- names
-  for (j in 1:dim(pcor.pvalues)[1])
-    pcor.pvalues.adjusted[j,] <- p.adjust(pcor.pvalues[j,], method = "BH")
+  pcor.pvalues.adjusted <- array( NA, dim = dim( pcor.pvalues ))
+  names <- colnames( pcor.pvalues )
+  colnames( pcor.pvalues.adjusted ) <- names
+  rownames( pcor.pvalues.adjusted ) <- names
+  for ( j in 1:dim( pcor.pvalues )[ 1 ] )
+    pcor.pvalues.adjusted[ j, ] <- p.adjust( pcor.pvalues[ j, ], method = "BH" )
   
   # Keep the significant results
   pcor.pvalues.sign <- pcor.pvalues.adjusted < 0.05
   # Change true in 1 and false to 0
   pcor.pvalues.sign <- 1 * pcor.pvalues.sign
   
-  # Change the matrices to negative (-1), no (0) and positive interaction (-1) metrices
+  # Change the matrices to negative (-1), no (0) and positive interaction (-1) matrices
   pcor.pvalues.sign <- ifelse( pcor.pvalues.sign == 0, 0,
-                               ifelse( results.pcor[[i]][["pcor"]] >= 0, 1, -1 ) )
+                               ifelse( results.pcor[[ i ]][[ "pcor" ]] >= 0, 1, -1 ) )
   
   # Remove the diagonal
   diag( pcor.pvalues.sign ) <- NA
   
   # Store in the results
-  pcor.pvalues.significant[[i]] <- pcor.pvalues.sign
+  pcor.pvalues.significant[[ i ]] <- pcor.pvalues.sign
 }
 ```
 
@@ -486,15 +475,15 @@ A.matrix.analysis <- list()
 # Subtract all the interaction matrices
 for ( i in 1:length( parms ) ) {
   # Make a list per simulation
- A.matrix.analysis[[i]] <- length( parms[[i]] ) %>% vector( mode = "list", length = . )
+ A.matrix.analysis[[i]] <- length( parms[[ i ]] ) %>% vector( mode = "list", length = . )
   for ( j in 1:length( parms[[i]] ) ) { 
-    # Here the a matrix without noise is used
-   A.matrix.analysis[[i]]<- parms[[i]][[j]][ c( "A.matrix" ) ] 
+    # Here we use the A matrix without noise 
+   A.matrix.analysis[[ i ]]<- parms[[ i ]][[ j ]][ c( "A.matrix" ) ] 
   }
 }
 
 # Flatten the list of lists
-A.matrix.analysis <-A.matrix.analysis %>% flatten()
+A.matrix.analysis <- A.matrix.analysis %>% flatten()
 
 ```
 
@@ -502,92 +491,92 @@ After selecting the variables of interest, the interaction matrix is transformed
 
 ```{r transform the interaction matrix, echo = TRUE}
 # Do for the a.matrices
-A.matrix.round <- length(A.matrix.analysis ) %>% vector( mode = "list", length = . )
+A.matrix.round <- length( A.matrix.analysis ) %>% vector( mode = "list", length = . )
 
-for ( i in 1:length(A.matrix.round ) ) {
+for ( i in 1:length( A.matrix.round ) ) {
   # change the matrices to negative (-1), no (0) and positive interaction (-1) metrices
- A.matrix.analysis.01 <- ifelse(A.matrix.analysis[[i]] == 0, 0,
-                                  ifelse(A.matrix.analysis[[i]] >= 0, 1, -1 ) )
+ A.matrix.analysis.01 <- ifelse( A.matrix.analysis[[ i ]] == 0, 0,
+                                  ifelse( A.matrix.analysis[[ i ]] >= 0, 1, -1 ) )
   
   # Remove the diagonal, because that has nothing to do with interactions
-  diag(A.matrix.analysis.01 ) <- NA
+  diag( A.matrix.analysis.01 ) <- NA
   
   # Store in the results
- A.matrix.round[[i]] <-A.matrix.analysis.01
+ A.matrix.round[[ i ]] <-A.matrix.analysis.01
 }
 ```
 
 Calculate the confusion matrix.
 
 ```{r confusion matrix, echo = TRUE}
-# Make a new list
-confusion.matrix <- length(A.matrix.round) %>% vector( mode = "list", length = . )
+# Make a new list 
+confusion.matrix <- length( A.matrix.round ) %>% vector( mode = "list", length = . )
 
 # Do for every simulation
-for ( i in 1:length(A.matrix.round ) ) {
+for ( i in 1:length( A.matrix.round ) ) {
   
   # Make an actual and predicted matrix
-  actual <-A.matrix.round[[i]]
-  predicted <- pcor.pvalues.significant[[i]]
+  actual <- A.matrix.round[[ i ]]
+  predicted <- pcor.pvalues.significant[[ i ]]
   
-  # Change the lower half of the predicted matrix to na (because it is symmetric)
+  # Change the lower half of the predicted matrix to NA (because it is symmetric)
   predicted[ lower.tri( predicted ) ] <- NA
   
   # Make a empty confusion matrix to store the results
-  # Actual is rows, predicted is columns
+  # Actual are rows, predicted are columns
   results <- matrix( 0, 3, 3 )
-  colnames( results ) <- c( "-1","0", "1" )
-  rownames( results ) <- c( "-1","0", "1" )
+  colnames( results ) <- c( "-1", "0", "1" )
+  rownames( results ) <- c( "-1", "0", "1" )
   
-  # Go through every row and columns
-  for ( r in 1:nrow( predicted ) ) {   
-    for ( c in 1:ncol( predicted ) ) {
+  # Go through every row and column
+  for ( r in 1:nrow( predicted )) {   
+    for ( c in 1:ncol( predicted )) {
       
       # If the value is na, than it was a diagonal and do nothing
-      if( is.na( predicted[r, c] ) ) {
-        results[1, 1] = results[1, 1] + 0
+      if( is.na( predicted[ r, c ] )) {
+        results[ 1, 1 ] = results[ 1, 1 ] + 0
         
         # If cor is 0 and interactions are both 0
-      } else if ( predicted[r, c] == 0 & ( actual[r, c] == 0 & actual[c, r] == 0 ) ) {
+      } else if ( predicted[ r, c ] == 0 & ( actual[ r, c ] == 0 & actual[ c, r ] == 0 ) ) {
         # Than a true negative
-        results[2, 2] = results[2, 2] + 1
+        results[ 2, 2 ] = results[ 2, 2 ] + 1
         # If cor is 0 and  one of the interactions interactions are 1
-      } else if ( predicted[r, c] == 0 & ( actual[r, c] == 1 | actual[c, r] == 1 ) ) {
+      } else if ( predicted[ r, c ] == 0 & ( actual[ r, c ] == 1 | actual[ c, r ] == 1 ) ) {
         # Than a false negative
-        results[3, 2] = results[3, 2] + 1
+        results[ 3, 2 ] = results[ 3, 2 ] + 1
         # If cor is 0 and  one of the interactions interactions are -1
-      } else if ( predicted[r, c] == 0 & ( actual[r, c] == -1 | actual[c, r] == -1 ) ) {
+      } else if ( predicted[ r, c ] == 0 & ( actual[ r, c ] == -1 | actual[ c, r ] == -1 )) {
         # Than a false negative
-        results[1, 2] = results[1, 2] + 1
+        results[ 1, 2 ] = results[ 1, 2 ] + 1
         
-        # If cor is 1 and one of the interactions interactions are 1
-      } else if ( predicted[r, c] == 1 & ( actual[r, c] == 1 | actual[c, r] == 1 ) ) {
+        # If cor is 1 and one of the interactions interactions are 1 
+      } else if ( predicted[ r, c ] == 1 & ( actual[ r, c ] == 1 | actual[ c, r ] == 1 )) {
         # Than a true positive
-        results[3, 3] = results[3, 3] + 1
+        results[ 3, 3 ] = results[ 3, 3 ] + 1
         # If cor is 1 and interactions are both 0
-      } else if ( predicted[r, c] == 1 & ( actual[r, c] == 0 & actual[c, r] == 0 ) ) {
+      } else if ( predicted[ r, c ] == 1 & ( actual[ r, c ] == 0 & actual[ c, r ] == 0 )) {
         # Than a false positive
-        results[2, 3] = results[2, 3] + 1
+        results[ 2, 3 ] = results[ 2, 3 ] + 1
         # If cor is 1 and interactions are both -1
-      } else if ( predicted[r, c] == 1 & ( actual[r, c] == -1 & actual[c, r] == -1 ) ) {
+      } else if ( predicted[ r, c ] == 1 & ( actual[ r, c ] == -1 & actual[ c, r ] == -1 )) {
         # Than a false positive (wrong sign)
         results[1, 3] = results[1, 3] + 1
         
         # If cor is -1 and one of the interactions are  -1
-      } else if ( predicted[r, c] == -1 & ( actual[r, c] == -1 | actual[c, r] == -1 ) ) {
-        # Than a true positive
-        results[1, 1] = results[1, 1] + 1
+      } else if ( predicted[ r, c ] == -1 & ( actual[ r, c ] == -1 | actual[ c, r ] == -1 )) {
+        # Than a true positive 
+        results[ 1, 1 ] = results[ 1, 1 ] + 1
         # If cor is -1 and interactions are both 0
-      } else if ( predicted[r, c] == -1 & ( actual[r, c] == 0 & actual[c, r] == 0 ) ) {
+      } else if ( predicted[ r, c ] == -1 & ( actual[ r, c ] == 0 & actual[ c, r ] == 0 )) {
         # Than a false positive
-        results[2, 1] = results[2, 1] + 1
+        results[ 2, 1 ] = results[ 2, 1 ] + 1
         # If cor is -1 and interactions are both 1
-      } else if( predicted[r, c] == -1 & ( actual[r, c] == 1 & actual[c, r] == 1 ) ) {
+      } else if( predicted[ r, c ] == -1 & ( actual[ r, c ] == 1 & actual[ c, r ] == 1 )) {
         # Than a false positive (wrong sign)
-        results[3, 1] = results[3, 1] + 1
+        results[ 3, 1 ] = results[ 3, 1 ] + 1
       }
       # Store the results in the list
-      confusion.matrix[[i]] <- results
+      confusion.matrix[[ i ]] <- results
     }
   }
 }
@@ -599,23 +588,22 @@ Calculate the precision, recall and F1-scores
 # Make a list to store the results
 F1.score <- length( confusion.matrix ) %>% vector( mode = "list", length = . )
 
-# Calculate F1_score with paying attention to the sign
-for ( i in 1:length( confusion.matrix ) ) {
+# Calculate F1 score with paying attention to the sign
+for ( i in 1:length( confusion.matrix )) {
   confusion <- confusion.matrix[[i]]
   
   # Calculate the precision
-  precision = ( confusion[1, 1] + confusion[3, 3] ) / ( ( confusion[1, 1] + confusion[3, 3] ) + 
-                                                          ( confusion[2, 1] + confusion[3, 1] + confusion[1, 3] + confusion[2, 3] ) )
+  precision = ( confusion[ 1, 1] + confusion[ 3, 3 ] ) / (( confusion[ 1, 1 ] + confusion[ 3, 3 ] ) + 
+                                                          ( confusion[ 2, 1 ] + confusion[ 3, 1 ] + confusion[ 1, 3 ] + confusion[ 2, 3 ] ))
   F1.score[[i]]$precision <- precision
   
   # Calculate the recall
-  recall = ( confusion[1,1] + confusion[3,3] ) / ( ( confusion[1,1] + confusion[3,3] ) + 
-                                                     ( confusion[1,2] + confusion[3,2] ) )
+  recall = ( confusion[ 1, 1 ] + confusion[ 3, 3 ] ) / (( confusion[ 1, 1 ] + confusion[3,3] ) + ( confusion[ 1, 2 ] + confusion[ 3, 2 ] ))
   F1.score[[i]]$recall <- recall
   
   # Calculate the F1-scores
-  F1score <- 2 * ( ( precision * recall ) / ( precision + recall ) )
-  F1.score[[i]]$F1score <- F1score
+  F1score <- 2 * (( precision * recall ) / ( precision + recall ))
+  F1.score[[ i ]]$F1score <- F1score
 }
 ```
 
@@ -627,36 +615,35 @@ F1.score.data <- matrix( 0, nrow = length( F1.score ), ncol = 3 )
 # Do for every simulation
 # Make a dataframe with the results
 for ( i in 1:length( F1.score ) ) {
-  F1.score.data[i, 1] <- F1.score[[i]][[ "precision" ]]
-  F1.score.data[i, 2] <- F1.score[[i]][[ "recall" ]]
-  F1.score.data[i, 3] <- F1.score[[i]][[ "F1score" ]]
+  F1.score.data[ i, 1 ] <- F1.score[[ i ]][[ "precision" ]]
+  F1.score.data[ i, 2 ] <- F1.score[[ i ]][[ "recall" ]]
+  F1.score.data[ i, 3 ] <- F1.score[[ i ]][[ "F1score" ]]
 }
 
-# Change the NA's in the data to 0
+# Change the NAs in the data to 0
 F1.score.data <- F1.score.data %>% replace( ., is.na( F1.score.data ), 0 ) 
 # Name the columns
 colnames( F1.score.data ) <- c( "Precision", " Recall", " F1.score" )
 
 F1.score.data.2 <- F1.score.data %>% melt( ., id.vars = "F1.score" )
 str( F1.score.data.2 )
-F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ) )
+F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ))
 
-# Make the boxplot
+# Make the boxplots
 boxplot <- ggplot( data = F1.score.data.2, 
-                   mapping = aes( x = Var2, y = value ) ) +
-  # Make a boxplot
+                   mapping = aes( x = Var2, y = value )) +
   geom_boxplot() +
   # Name the labels
   labs( x = "Score type", y = "Value" ) +
   # Text over an angle
-  theme( axis.text.x = element_text( angle = 45, hjust = 1 ) )  + 
+  theme( axis.text.x = element_text( angle = 45, hjust = 1 ))  + 
   # Color the boxes
   geom_boxplot(
     aes( fill = Var2 ),
-    position = position_dodge( 0.9 ) ) + 
-  ggtitle( paste( "Results", sep = ",", collapse = NULL) )  +
-  guides(fill=guide_legend(title="Score type")) +
-  scale_y_continuous( limits = c( 0, 1 ) )
-# Plot the boxplot
+    position = position_dodge( 0.9 )) + 
+  ggtitle( paste( "Results", sep = ",", collapse = NULL))  +
+  guides( fill = guide_legend( title = "Score type" )) +
+  scale_y_continuous( limits = c( 0, 1 ))
+# Plot the boxplots
 boxplot
 ```

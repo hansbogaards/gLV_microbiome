@@ -1,24 +1,19 @@
 ---
 title: R code "Correlations cannot distinguish interaction types in microbial networks"
 author: "Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards"
-date: "21/05/2021"
-output:
-  html_document: default
-  word_document: default
-  pdf_document: default
-  github_document: default
+output: 
+  github_document:
+    toc: true
+    toc_depth: 3
+editor_options:
+  chunk_output_type: console
 ---
 
-# Contents
-### 1- Introduction
-### 2- Load the packages
-### 3- The generalized host-specific Lotka-Volterra model
-### 4- Choose your settings and draw random parameters
-### 5- Solve the model
-### 6- Create the dataset
-### 7- Calculate the partial correlations
-### 8- Calculate the precision, recall and F1 scores
-
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, warning = FALSE, comment = NA, cache = TRUE,
+  fig.width = 7, fig.height = 7)
+```
 
 
 ## Introduction
@@ -35,16 +30,16 @@ library( tidyverse )
 library( deSolve )
 library( seqtime ) 
 library( purrr )
-library( ggplot2 )
 library( reshape2 )
 library( truncnorm )
 library( Matrix )
+library( ggplot2 )
 ```
 
 
 
 ## The generalized host-specific Lotka-Volterra model
-We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species *i* with intrinsic growth rate (*r*), carrying capacity (*K*) and interactions with other species (*a*) that are specific for species *i* as well as for host *m* (see methods).
+We simulated bacterial communities by means of the generalized Lotka-Volterra (gLV) model. We simulated the population growth of species *i* with intrinsic growth rates (*r*), carrying capacities (*K*) and interactions with other species (*a*) that are specific for species *i* as well as for host *m* (see methods).
 
 
 ```{r the model, echo = TRUE}
@@ -53,10 +48,10 @@ gLV.model <- function( time, y, parms ) {
   K_im = parms$K_im %>% as.numeric() 
   a_ijm = parms$a_ijm %>% as.matrix() 
   
-  # The host specific gLV function
+  # The function
   dydt <- r_im * y * ( 1 - ( 1/K_im ) * y + ( a_ijm %*% y ))
   
-  # Store the data in a list
+  # Store data in a list
   dydt %>% list() 
 } 
 ```
@@ -67,7 +62,7 @@ gLV.model <- function( time, y, parms ) {
 First set some standard settings. Optionally you can choose a different number of species and samples. 
 
 ```{r settings, echo = TRUE}
-# Set date / time of the simulation  
+# Set date and time of the simulation  
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
@@ -77,7 +72,7 @@ n.simulations = 10
 # Size of the population / total number of species
 n.species = 10
 
-# Number of samples (people)
+# Number of samples (hosts)
 n.samples = 300
 # Later the samples with species that go extinct are removed, therefor simulate more samples than preferred 
 n.samples.total = 400
@@ -104,12 +99,12 @@ parms <- n.simulations %>% vector( mode = "list", length = . )
 
 # Do the simulation n.simulations * n.samples times
 for ( j in 1:length( parms ) ) {
-  # make a list in the list of length N.samples
+  # Make a list in the list of length N.samples
   parms[[j]] <- n.samples.total %>% vector( mode = "list", length = . )
   
   for ( k in 1:n.samples.total ) {
     
-    # use the seeds
+    # Use the seeds
     seed[j] %>% set.seed()
     
     # Set random parameters
@@ -185,11 +180,11 @@ for ( l in 1:length( parms ) ) {
     # Only add noise when the value in the A.matrix is not 0
     parms[[l]][[m]]$a_ijm <- ifelse( parms[[l]][[m]]$A.matrix != 0, parms[[l]][[m]]$A.matrix * exp( noise.on.a_ij ), 0 )
     
-    # Add noise to the growth rates
+    # Add noise to the growth rates (in the base case this noise is 0)
     noise.on.r_i <- n.species %>% rnorm( ., 0, 0 )
     parms[[l]][[m]]$r_im <- parms[[l]][[m]]$r_i * exp( noise.on.r_i )
     
-    # Add noise to the carrying capacities
+    # Add noise to the carrying capacities (in the base case this noise is 0)
     noise.on.K_i <- n.species %>% rnorm( ., 0, 0 )
     parms[[l]][[m]]$K_im <- parms[[l]][[m]]$K_i * exp( noise.on.K_i )
   }
@@ -644,7 +639,6 @@ F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ) )
 # Make the boxplot
 boxplot <- ggplot( data = F1.score.data.2, 
                    mapping = aes( x = Var2, y = value ) ) +
-  # Make a boxplot
   geom_boxplot() +
   # Name the labels
   labs( x = "Score type", y = "Value" ) +
