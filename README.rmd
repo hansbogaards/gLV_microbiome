@@ -1,7 +1,7 @@
 ---
 title: "R code: Correlations cannot distinguish interaction types in microbial networks"
 authors: "Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -58,8 +58,8 @@ First set some standard settings. Optionally you can choose a different number o
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
-# In the paper, 1000 simulations were used, here we chose 25 simulations, by means of giving an example, because it is more time efficient
-n.simulations = 50
+# In the paper, 1000 simulations were used, here we chose less simulations, by means of giving an example, because it is more time efficient
+n.simulations = 25
 
 # Size of the population / total number of species
 n.species = 10
