@@ -49,7 +49,7 @@ gLV.model <- function( time, y, parms ) {
   K_im = parms$K_im %>% as.numeric() 
   a_ijm = parms$a_ijm %>% as.matrix() 
   
-  # The host-specific gLV function
+  # The host-specific generalized Lotka-Volterra function
   dydt <- r_im * y * ( 1 - ( 1/K_im ) * y + ( a_ijm %*% y ))
   
   # Store the data in a list
@@ -331,8 +331,7 @@ for ( t in 1:length( community.samples.survival )) {
 }
 ```
 
-    ## [1]  10 400
-    ## [1]  10 284
+    ## [1]  10 280
     ## [1] "not enough species survived"
     ## [1]  10 400
     ## [1]  10 400
@@ -341,21 +340,19 @@ for ( t in 1:length( community.samples.survival )) {
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
-    ## [1]  10 185
-    ## [1] "not enough species survived"
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 190
-    ## [1] "not enough species survived"
-    ## [1]  10 400
-    ## [1]  10 356
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
-    ## [1]  10 267
-    ## [1] "not enough species survived"
+    ## [1]  10 399
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 324
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
@@ -375,19 +372,7 @@ for ( u in 1:length( community.samples.survival ) ) {
 }
 ```
 
-    ## [1] NA
-    ## [1] 2
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] 10
-    ## [1] NA
-    ## [1] NA
-    ## [1] 13
+    ## [1] 1
     ## [1] NA
     ## [1] NA
     ## [1] NA
@@ -395,7 +380,19 @@ for ( u in 1:length( community.samples.survival ) ) {
     ## [1] NA
     ## [1] NA
     ## [1] NA
-    ## [1] 21
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
     ## [1] NA
     ## [1] NA
     ## [1] NA
@@ -723,10 +720,10 @@ F1.score.data.2 <- F1.score.data %>% melt( ., id.vars = "F1.score" )
 str( F1.score.data.2 )
 ```
 
-    ## 'data.frame':    63 obs. of  3 variables:
+    ## 'data.frame':    72 obs. of  3 variables:
     ##  $ Var1 : int  1 2 3 4 5 6 7 8 9 10 ...
     ##  $ Var2 : Factor w/ 3 levels "Precision"," Recall",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ value: num  1 1 0.667 1 0.8 ...
+    ##  $ value: num  1 0.667 1 1 1 ...
 
 ``` r
 F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ))

@@ -40,7 +40,7 @@ gLV.model <- function( time, y, parms ) {
   K_im = parms$K_im %>% as.numeric() 
   a_ijm = parms$a_ijm %>% as.matrix() 
   
-  # The host-specific gLV function
+  # The host-specific generalized Lotka-Volterra function
   dydt <- r_im * y * ( 1 - ( 1/K_im ) * y + ( a_ijm %*% y ))
   
   # Store the data in a list
