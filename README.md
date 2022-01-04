@@ -67,7 +67,7 @@ number of species and samples.
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
-# In the paper, 1000 simulations were used, here we chose 25 simulations, by means of giving an example, because it is more time efficient
+# In the paper, 1000 simulations were used, here we chose less simulations, by means of giving an example, because it is more time efficient
 n.simulations = 25
 
 # Size of the population / total number of species
@@ -332,19 +332,7 @@ for ( t in 1:length( community.samples.survival )) {
 ```
 
     ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 352
-    ## [1]  10 400
-    ## [1]  10 201
+    ## [1]  10 284
     ## [1] "not enough species survived"
     ## [1]  10 400
     ## [1]  10 400
@@ -353,6 +341,21 @@ for ( t in 1:length( community.samples.survival )) {
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
+    ## [1]  10 185
+    ## [1] "not enough species survived"
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 190
+    ## [1] "not enough species survived"
+    ## [1]  10 400
+    ## [1]  10 356
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 267
+    ## [1] "not enough species survived"
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
@@ -373,6 +376,7 @@ for ( u in 1:length( community.samples.survival ) ) {
 ```
 
     ## [1] NA
+    ## [1] 2
     ## [1] NA
     ## [1] NA
     ## [1] NA
@@ -380,19 +384,18 @@ for ( u in 1:length( community.samples.survival ) ) {
     ## [1] NA
     ## [1] NA
     ## [1] NA
+    ## [1] 10
     ## [1] NA
     ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] 14
-    ## [1] NA
+    ## [1] 13
     ## [1] NA
     ## [1] NA
     ## [1] NA
     ## [1] NA
     ## [1] NA
     ## [1] NA
+    ## [1] NA
+    ## [1] 21
     ## [1] NA
     ## [1] NA
     ## [1] NA
@@ -720,10 +723,10 @@ F1.score.data.2 <- F1.score.data %>% melt( ., id.vars = "F1.score" )
 str( F1.score.data.2 )
 ```
 
-    ## 'data.frame':    72 obs. of  3 variables:
+    ## 'data.frame':    63 obs. of  3 variables:
     ##  $ Var1 : int  1 2 3 4 5 6 7 8 9 10 ...
     ##  $ Var2 : Factor w/ 3 levels "Precision"," Recall",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ value: num  1 1 1 0.909 1 ...
+    ##  $ value: num  1 1 0.667 1 0.8 ...
 
 ``` r
 F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ))
