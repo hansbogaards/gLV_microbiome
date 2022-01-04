@@ -67,7 +67,7 @@ number of species and samples.
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
-# In the paper, 1000 simulations were used, here we chose less simulations, by means of giving an example, because it is more time efficient
+# In the paper, 1000 simulations were used, here we have less simulations, by means of giving an example, because it is more time efficient
 n.simulations = 25
 
 # Size of the population / total number of species
@@ -334,12 +334,18 @@ for ( t in 1:length( community.samples.survival )) {
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 393
-    ## [1]  10 400
-    ## [1]  10 339
-    ## [1]  10 271
+    ## [1]  10 237
     ## [1] "not enough species survived"
+    ## [1]  10 317
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 399
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 400
+    ## [1]  10 360
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
@@ -348,17 +354,9 @@ for ( t in 1:length( community.samples.survival )) {
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
-    ## [1]  10 257
-    ## [1] "not enough species survived"
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 383
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 174
-    ## [1] "not enough species survived"
 
 ``` r
 # Check if there are simulations with not enough species or samples
@@ -377,12 +375,7 @@ for ( u in 1:length( community.samples.survival ) ) {
     ## [1] NA
     ## [1] NA
     ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] 8
-    ## [1] NA
+    ## [1] 4
     ## [1] NA
     ## [1] NA
     ## [1] NA
@@ -390,7 +383,6 @@ for ( u in 1:length( community.samples.survival ) ) {
     ## [1] NA
     ## [1] NA
     ## [1] NA
-    ## [1] 17
     ## [1] NA
     ## [1] NA
     ## [1] NA
@@ -398,7 +390,13 @@ for ( u in 1:length( community.samples.survival ) ) {
     ## [1] NA
     ## [1] NA
     ## [1] NA
-    ## [1] 25
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
+    ## [1] NA
 
 ``` r
 # Remove empty list elements
@@ -722,10 +720,10 @@ F1.score.data.2 <- F1.score.data %>% melt( ., id.vars = "F1.score" )
 str( F1.score.data.2 )
 ```
 
-    ## 'data.frame':    66 obs. of  3 variables:
+    ## 'data.frame':    72 obs. of  3 variables:
     ##  $ Var1 : int  1 2 3 4 5 6 7 8 9 10 ...
     ##  $ Var2 : Factor w/ 3 levels "Precision"," Recall",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ value: num  1 1 1 1 1 1 1 0.75 1 1 ...
+    ##  $ value: num  1 0.5 0.75 1 0.917 ...
 
 ``` r
 F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ))

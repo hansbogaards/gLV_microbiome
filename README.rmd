@@ -58,7 +58,7 @@ First set some standard settings. Optionally you can choose a different number o
 Date <- Sys.time() %>% format( ., format="Date %d-%m-%Y_Time %H.%M" )
 
 # Choose the number of simulations
-# In the paper, 1000 simulations were used, here we chose less simulations, by means of giving an example, because it is more time efficient
+# In the paper, 1000 simulations were used, here we have less simulations, by means of giving an example, because it is more time efficient
 n.simulations = 25
 
 # Size of the population / total number of species
