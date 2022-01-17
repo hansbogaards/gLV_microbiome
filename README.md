@@ -333,19 +333,20 @@ for ( t in 1:length( community.samples.survival )) {
 
     ## [1]  10 400
     ## [1]  10 400
+    ## [1]  10 399
     ## [1]  10 400
-    ## [1]  10 237
+    ## [1]  10 400
+    ## [1]  10 283
     ## [1] "not enough species survived"
+    ## [1]  10 380
+    ## [1]  10 400
+    ## [1]  10 372
+    ## [1]  10 400
+    ## [1]  10 400
     ## [1]  10 317
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
-    ## [1]  10 399
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 360
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
@@ -353,8 +354,8 @@ for ( t in 1:length( community.samples.survival )) {
     ## [1]  10 400
     ## [1]  10 400
     ## [1]  10 400
-    ## [1]  10 400
-    ## [1]  10 400
+    ## [1]  10 206
+    ## [1] "not enough species survived"
     ## [1]  10 400
     ## [1]  10 400
 
@@ -375,7 +376,9 @@ for ( u in 1:length( community.samples.survival ) ) {
     ## [1] NA
     ## [1] NA
     ## [1] NA
-    ## [1] 4
+    ## [1] NA
+    ## [1] NA
+    ## [1] 6
     ## [1] NA
     ## [1] NA
     ## [1] NA
@@ -392,9 +395,7 @@ for ( u in 1:length( community.samples.survival ) ) {
     ## [1] NA
     ## [1] NA
     ## [1] NA
-    ## [1] NA
-    ## [1] NA
-    ## [1] NA
+    ## [1] 23
     ## [1] NA
     ## [1] NA
 
@@ -720,10 +721,10 @@ F1.score.data.2 <- F1.score.data %>% melt( ., id.vars = "F1.score" )
 str( F1.score.data.2 )
 ```
 
-    ## 'data.frame':    72 obs. of  3 variables:
+    ## 'data.frame':    69 obs. of  3 variables:
     ##  $ Var1 : int  1 2 3 4 5 6 7 8 9 10 ...
     ##  $ Var2 : Factor w/ 3 levels "Precision"," Recall",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ value: num  1 0.5 0.75 1 0.917 ...
+    ##  $ value: num  1 1 0.8 0.667 1 ...
 
 ``` r
 F1.score.data.2$value <- as.numeric( as.character( F1.score.data.2$value ))
