@@ -4,11 +4,9 @@ networks
 
 ## Introduction
 
-R code belonging to the paper: “Correlations cannot distinguish
-interaction types in microbial networks” by Susanne Pinto, Elisa
-Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards.
-This document shows the script used to perform the base case study of
-the paper.
+R code belonging to the paper: “Species abundance correlations carry limited information about microbial network interactions” by Susanne Pinto, Elisa Benincà, Egbert H. van Nes, Marten Scheffer and Johannes A. Bogaards.
+The open access version of this paper can be found here: https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1010491
+This document shows the script used to perform the base case study of the paper.
 
 In addressing how gLV-type interactions can be inferred from
 cross-sectional data, we mainly focus on the correspondence between the
